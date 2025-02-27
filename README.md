@@ -61,3 +61,103 @@ Output should look something like this:
 Note: our agent uses the `granite3.1-dense:8b` model, so if you don't already have that on your system you'll need to run `ollama pull granite3.1-dense:8b` to get it
 
 Ok, great, we've run an agent on our laptop. That's (mostly) trivial. Now let's see what it takes to get it working on the BeeAI platform.
+
+## Setting up the BeeAI platform
+
+The first thing we need to do is install the BeeAI platform. There are a variety of ways to [install](https://github.com/i-am-bee/beeai/tree/54f29d4ca0776d03188e5d82893c25cc0e8ea53d?tab=readme-ov-file#installation). Since I'm using Linux, I'll skip Brew and go straight for pip:
+
+```bash
+pip install beeai-cli
+```
+
+For reference, this installed v0.0.3 of the cli, v0.0.5 of the sdk, and v0.0.2 of the server.
+
+Per the readme instructions, we need to run the server in a separate terminal window, so let's do that now.
+
+```bash
+# In a separate terminal window (make sure to activate venv too)
+beeai serve
+```
+
+If this worked, I should be able to access the BeeAI web interface at `http://localhost:8333`...
+
+![beeai ui](images/01-beeai-ui.png)
+
+Awesome! Let's get started with Python (*clicks on "Get Started with Python" button*...)
+
+![huh?](images/02-huh.png)
+
+That didn't seem to do anything, just open a new tab to the same page... turns out we need to click on the "Agents" link at the top of the page. We do that and we come to this page
+
+![agents](images/03-agents.png)
+
+Ok, now we're in business. There's a link near the top of the screen to "Import agents", let's give that a try
+
+![import agent](images/04-import.png)
+
+Since we're going to try using the simple agent we copied from the beeai-framework examples, we'll use the local option for now....
+
+![what's a provider](images/05-need-a-provider.png)
+
+but it seems like it's asking for the path to the "provider" not our agent (and providing a link to the agent source code doesn't work)...
+
+![no import](images/06-no-import.png)
+
+So, what's a provider?
+
+
+## Looking for a provider
+
+Thought one: let's check the [docs](https://github.com/i-am-bee/beeai/tree/54f29d4ca0776d03188e5d82893c25cc0e8ea53d/docs), but as of now those are still a work in progress. Still, there's a [create-agents](https://github.com/i-am-bee/beeai/tree/54f29d4ca0776d03188e5d82893c25cc0e8ea53d/docs/create-agents) subdirectory, though it only has agent source code examples (which isn't any different than our little agent.py that we want to run), so no luck here.
+
+Thought two: let's search the README for the word "provider"... and that gives us this line:
+
+![that's a provider](images/07-ahh-provider.png)
+
+If we follow the filepath we find this directory
+
+![provider directory](images/08-providers.png)
+
+Looking at the `beeai-provider.yaml` file, we see this:
+
+```yaml
+manifestVersion: 1
+driver: nodejs
+package: "git+https://github.com/i-am-bee/beeai@agents-v0.0.15#path=agents/official/beeai-framework"
+serverType: http
+mcpTransport: sse
+mcpEndpoint: /sse
+```
+
+And looking at the contents of the directory, I see
+
+```
+.
+├── beeai-provider-local.yaml
+├── beeai-provider-unmanaged.yaml
+├── beeai-provider.yaml
+├── package.json
+├── README.md
+├── src
+│   ├── chat
+│   │   ├── chat.ts
+│   │   ├── LICENSE
+│   │   └── README.md
+│   ├── config.ts
+│   ├── content-judge
+│   │   ├── content-judge.ts
+│   │   ├── LICENSE
+│   │   └── README.md
+│   ├── podcast-creator
+│   │   ├── LICENSE
+│   │   ├── podcast-creator.ts
+│   │   └── README.md
+│   └── server.ts
+└── tsconfig.json
+```
+
+Hmm, this is TypeScript, and I'm writing Python... wonder if there's a Python one agent I can use instead... let's check out the composition agent...
+
+![python provider](images/09-python.png)
+
+Ok, think we're back in business now. Let's see what it takes to create a provider...
